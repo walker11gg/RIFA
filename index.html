@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <!-- Metadatos básicos para soporte UTF-8 y diseño responsive en dispositivos móviles -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rifa Skate Pro-Tabla | Panel de Administración</title>
+
+  <!-- TAILWIND CSS CDN: Estilos utilitarios de diseño rápido y moderno -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- SUPABASE JS SDK: Librería cliente para conectarnos directamente a PostgreSQL -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- CSS PERSONALIZADO EN BLOQUE <style>: Ajustes estéticos específicos no cubiertos por Tailwind -->
+  <style>
+    /* Ocultar el scrollbar cuando el modal está desplegado sin afectar el flujo */
+    body.modal-open {
+      overflow: hidden;
+    }
+
+    /* Animación suave para la entrada de los botones de la cuadrícula */
+    .btn-puesto {
+      transition: transform 0.15s ease-in-out, background-color 0.2s ease, border-color 0.2s ease;
+    }
+    
+    .btn-puesto:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-puesto:active {
+      transform: translateY(0px) scale(0.96);
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8 font-sans antialiased selection:bg-amber-500 selection:text-slate-950">
+
+  <!-- CONTENEDOR PRINCIPAL -->
+  <div class="max-w-5xl mx-auto space-y-6">
+    
+    <!-- ENCABEZADO DE LA APLICACIÓN -->
+    <header class="flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-800/90 backdrop-blur-md p-6 rounded-2xl border border-slate-700/80 shadow-2xl">
+      <div>
+        <h1 class="text-3xl font-black text-amber-400 uppercase tracking-wide flex items-center gap-2">
+          <span></span>  
+        </h1>
+        <p class="text-slate-400 text-sm mt-1"></p>
+      </div>
+      <!-- ENCABEZADO ESTILO BOLETA TRADICIONAL -->
+<header class="bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-700 shadow-xl max-w-3xl mx-auto tracking-wide">
+  
+  <!-- Fila Principal: "Rifa" + Premio con línea inferior -->
+  <div class="flex items-baseline gap-3 border-b-2 border-slate-400 pb-2">
+    <!-- Palabra Rifa en grande -->
+    <span class="text-4xl sm:text-6xl font-extrabold text-white leading-none">
+      Rifa
+    </span>
+    
+    <!-- Premio al centro con formato centrado/mayúsculas -->
+    <div class="flex-1 text-center font-bold text-amber-400 text-sm sm:text-lg uppercase leading-tight">
+      DE PIZZA GRANDE 40 CMS DE LA REPIZZA CON GASIMBA BIEN MAQUIAVELICO
+    </div>
+  </div>
+
+  <!-- Fila Secundaria: Fecha, Lotería y Carita -->
+  <div class="text-center mt-3 text-xs sm:text-sm font-semibold text-slate-300 uppercase tracking-wider space-y-1">
+    <p>
+      JUEGA: EL 26 DE SEPTIEMBRE CON LOS DOS ULTIMOS NUMEROS DE LA LOTERIA DE BOYACA <span class="text-amber-400 normal-case font-bold">:b</span>
+    </p>
+  </div>
+
+</header>
+
+      <!-- BOTÓN DE ACCIÓN: RESPALDO DE DATOS EN FORMATO JSON -->
+      <div>
+        <button 
+          id="btn-exportar"
+          onclick="exportarJSON()" 
+          class="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2.5 rounded-xl transition-all duration-200 shadow-lg shadow-emerald-950/40 cursor-pointer active:scale-95">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg>
+          Descargar Respaldo JSON
+        </button>
+      </div>
+    </header>
+
+    <!-- METRICAS / ESTADÍSTICAS EN TIEMPO REAL -->
+    <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
+      <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60 text-center">
+        <span class="block text-slate-400 text-xs font-semibold uppercase tracking-wider">Total Puestos</span>
+        <span class="text-2xl md:text-3xl font-extrabold text-white">100</span>
+      </div>
+      <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60 text-center">
+        <span class="block text-slate-400 text-xs font-semibold uppercase tracking-wider">Apartados</span>
+        <span id="stat-apartados" class="text-2xl md:text-3xl font-extrabold text-amber-400">0</span>
+      </div>
+      <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60 text-center">
+        <span class="block text-slate-400 text-xs font-semibold uppercase tracking-wider">Pagados</span>
+        <span id="stat-pagados" class="text-2xl md:text-3xl font-extrabold text-emerald-400">0</span>
+      </div>
+      <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60 text-center">
+        <span class="block text-slate-400 text-xs font-semibold uppercase tracking-wider">Disponibles</span>
+        <span id="stat-disponibles" class="text-2xl md:text-3xl font-extrabold text-cyan-400">100</span>
+      </div>
+    </section>
+
+    <!-- LEYENDA EXPLICATIVA DE COLORES -->
+    <nav class="flex justify-center gap-6 text-xs font-semibold bg-slate-800/40 p-3 rounded-xl border border-slate-800">
+      <div class="flex items-center gap-2">
+        <span class="w-3.5 h-3.5 rounded-md bg-slate-900 border border-slate-700"></span>
+        <span class="text-slate-300">Disponible</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="w-3.5 h-3.5 rounded-md bg-amber-500/20 border border-amber-500"></span>
+        <span class="text-slate-300">Apartado</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="w-3.5 h-3.5 rounded-md bg-emerald-500/20 border border-emerald-500"></span>
+        <span class="text-slate-300">Pagado</span>
+      </div>
+    </nav>
+
+    <!-- CUADRÍCULA DE LOS 100 PUESTOS (GRID 5x20 Móvil / 10x10 Desktop) -->
+    <main 
+      id="grid-rifa" 
+      class="grid grid-cols-5 sm:grid-cols-10 gap-2.5 bg-slate-800/80 p-4 md:p-6 rounded-2xl border border-slate-700/80 shadow-2xl">
+      <!-- Los 100 números (01 - 100) se inyectan dinámicamente con JS -->
+    </main>
+
+  </div>
+
+  <!-- MODAL PARA GESTIONAR O REGISTRAR COMPRADORES -->
+  <div id="modal-puesto" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl w-full max-w-md shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- Encabezado del Modal -->
+      <div class="flex justify-between items-center border-b border-slate-700/60 pb-3">
+        <h2 class="text-xl font-bold text-amber-400">
+          Gestionar Puesto #<span id="modal-numero-titulo">00</span>
+        </h2>
+        <button onclick="cerrarModal()" class="text-slate-400 hover:text-white font-bold p-1">✕</button>
+      </div>
+      
+      <!-- Formulario de Edición/Registro -->
+      <form id="form-puesto" class="space-y-4">
+        <div>
+          <label for="input-nombre" class="block text-xs font-medium text-slate-300 mb-1.5">Nombre del Comprador</label>
+          <input 
+            type="text" 
+            id="input-nombre" 
+            placeholder="Ej. Juan Pérez" 
+            class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all text-sm">
+        </div>
+
+        <div>
+          <label for="input-telefono" class="block text-xs font-medium text-slate-300 mb-1.5">Teléfono / WhatsApp</label>
+          <input 
+            type="text" 
+            id="input-telefono" 
+            placeholder="Ej. +57 300 123 4567" 
+            class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all text-sm">
+        </div>
+
+        <!-- Toggle / Checkbox de Estado de Pago -->
+        <div class="flex items-center gap-3 bg-slate-900/60 p-3 rounded-xl border border-slate-700/50">
+          <input 
+            type="checkbox" 
+            id="input-pagado" 
+            class="w-5 h-5 accent-emerald-500 rounded cursor-pointer border-slate-700 bg-slate-800">
+          <label for="input-pagado" class="text-sm font-semibold text-slate-200 cursor-pointer select-none">
+            Marcado como PAGADO
+          </label>
+        </div>
+
+        <!-- Botones de Acción del Formulario -->
+        <div class="flex gap-2 pt-2">
+          <button 
+            type="button" 
+            onclick="cerrarModal()" 
+            class="w-1/2 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold py-2.5 rounded-xl text-sm transition cursor-pointer">
+            Cancelar
+          </button>
+          <button 
+            type="button" 
+            onclick="liberarPuesto()" 
+            class="w-1/2 bg-rose-950/80 hover:bg-rose-900/90 text-rose-300 border border-rose-800/60 font-semibold py-2.5 rounded-xl text-sm transition cursor-pointer">
+            Liberar Puesto
+          </button>
+        </div>
+
+        <button 
+          type="submit" 
+          class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl text-sm transition shadow-lg shadow-amber-500/20 cursor-pointer">
+          Guardar Registro
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT: LÓGICA DE NEGOCIO, EVENTOS Y COMUNICACIÓN CON SUPABASE -->
+  <script>
+    // =========================================================================
+    // 1. CONFIGURACIÓN E INICIALIZACIÓN DE SUPABASE
+    // =========================================================================
+    
+    // ⚠️ ATENCIÓN: Reemplaza estas dos constantes con los credenciales de tu proyecto Supabase.
+    const SUPABASE_URL = 'https://ihsngmzijvhuzrtfnngf.supabase.co'; 
+    const SUPABASE_ANON_KEY = 'sb_publishable_kvyCcG3htnQ_kIhVlfIetg_Ooxt1M1H';
+
+    // Instanciamos el cliente de Supabase usando la librería cargada por CDN
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Estado global en memoria para almacenar los registros traídos de la base de datos
+    let datosRifa = [];
+    let numeroSeleccionado = null; // Guardará el número actual abierto en el modal (ej. "01")
+
+    // =========================================================================
+    // 2. FUNCIONES DE LECTURA Y RENDERIZADO DEL DOM
+    // =========================================================================
+
+    /**
+     * Carga todos los registros de la tabla 'rifa' guardados en Supabase.
+     */
+    async function cargarDatos() {
+      try {
+        const { data, error } = await supabaseClient
+          .from('rifa')
+          .select('*')
+          .order('numero', { ascending: true });
+
+        if (error) throw error;
+
+        // Asignamos la respuesta de la base de datos a nuestro array local
+        datosRifa = data;
+
+        // Re-renderizamos la interfaz gráfica y actualizamos métricas
+        renderizarCuadricula();
+        actualizarMetricas();
+      } catch (err) {
+        console.error("Error al sincronizar con Supabase:", err);
+        // Si aún no has conectado las llaves reales, renderiza una estructura local temporal para desarrollo
+        inicializarEstructuraLocal();
+      }
+    }
+
+    /**
+     * Fallback local: Si Supabase no responde o faltan las llaves, genera los 100 puestos en memoria.
+     */
+    function inicializarEstructuraLocal() {
+      if (datosRifa.length === 0) {
+        for (let i = 1; i <= 100; i++) {
+          const num = String(i).padStart(2, '0');
+          datosRifa.push({
+            numero: num,
+            comprador: null,
+            telefono: null,
+            pagado: false
+          });
+        }
+      }
+      renderizarCuadricula();
+      actualizarMetricas();
+    }
+
+    /**
+     * Construye y pinta en el HTML los 100 botones dinámicos con sus estilos según el estado.
+     */
+    function renderizarCuadricula() {
+      const container = document.getElementById('grid-rifa');
+      container.innerHTML = ''; // Limpiamos el contenedor antes de dibujar
+
+      datosRifa.forEach(item => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.innerText = item.numero; // Muestra "01", "02", ..., "100"
+
+        // Evaluación de estilos de color según el estado del puesto
+        let colorStyle = 'bg-slate-900 border-slate-700/80 text-slate-300 hover:border-amber-400 hover:text-amber-400';
+        
+        if (item.pagado) {
+          // Verde: Puesto comprado y pagado
+          colorStyle = 'bg-emerald-500/20 border-emerald-500 text-emerald-400 hover:bg-emerald-500/30';
+        } else if (item.comprador) {
+          // Amarillo: Puesto apartado pero pendiente de pago
+          colorStyle = 'bg-amber-500/20 border-amber-500 text-amber-400 hover:bg-amber-500/30';
+        }
+
+        // Clase combinada
+        btn.className = `btn-puesto py-3 px-1 rounded-xl text-center font-bold font-mono text-sm sm:text-base border cursor-pointer ${colorStyle}`;
+
+        // Evento click para abrir la gestión del puesto seleccionado
+        btn.onclick = () => abrirModal(item);
+
+        container.appendChild(btn);
+      });
+    }
+
+    /**
+     * Calcula y muestra en pantalla los totales de números disponibles, apartados y pagados.
+     */
+    function actualizarMetricas() {
+      const pagados = datosRifa.filter(i => i.pagado).length;
+      const apartados = datosRifa.filter(i => i.comprador && !i.pagado).length;
+      const disponibles = datosRifa.filter(i => !i.comprador).length;
+
+      document.getElementById('stat-pagados').innerText = pagados;
+      document.getElementById('stat-apartados').innerText = apartados;
+      document.getElementById('stat-disponibles').innerText = disponibles;
+    }
+
+    // =========================================================================
+    // 3. GESTIÓN DEL MODAL Y FORMULARIO
+    // =========================================================================
+
+    /**
+     * Abre el modal e inyecta la información del puesto seleccionado.
+     */
+    function abrirModal(item) {
+      numeroSeleccionado = item.numero;
+      
+      document.getElementById('modal-numero-titulo').innerText = item.numero;
+      document.getElementById('input-nombre').value = item.comprador || '';
+      document.getElementById('input-telefono').value = item.telefono || '';
+      document.getElementById('input-pagado').checked = !!item.pagado;
+
+      // Mostrar modal
+      const modal = document.getElementById('modal-puesto');
+      modal.classList.remove('hidden');
+      document.body.classList.add('modal-open');
+    }
+
+    /**
+     * Cierra el modal y limpia el formulario.
+     */
+    function cerrarModal() {
+      const modal = document.getElementById('modal-puesto');
+      modal.classList.add('hidden');
+      document.body.classList.remove('modal-open');
+      numeroSeleccionado = null;
+    }
+
+    /**
+     * Maneja el envío del formulario para guardar o editar un puesto en Supabase.
+     */
+    document.getElementById('form-puesto').onsubmit = async (e) => {
+      e.preventDefault(); // Previene la recarga predeterminada de la página
+
+      const nombre = document.getElementById('input-nombre').value.trim();
+      const telefono = document.getElementById('input-telefono').value.trim();
+      const pagado = document.getElementById('input-pagado').checked;
+
+      // Actualizamos la base de datos remota
+      try {
+        const { error } = await supabaseClient
+          .from('rifa')
+          .update({ 
+            comprador: nombre || null, 
+            telefono: telefono || null, 
+            pagado: pagado,
+            fecha_registro: new Date().toISOString()
+          })
+          .eq('numero', numeroSeleccionado);
+
+        if (error) throw error;
+
+      } catch (err) {
+        console.warn("No se pudo persistir en Supabase (modo fallback activo). Actualizando estado local.");
+        
+        // Si estamos probando localmente sin credenciales de Supabase
+        const itemLocal = datosRifa.find(i => i.numero === numeroSeleccionado);
+        if (itemLocal) {
+          itemLocal.comprador = nombre || null;
+          itemLocal.telefono = telefono || null;
+          itemLocal.pagado = pagado;
+        }
+      }
+
+      cerrarModal();
+      cargarDatos(); // Recargar cambios
+    };
+
+    /**
+     * Limpia los datos de un puesto, volviéndolo a dejar en estado 'Disponible'.
+     */
+    async function liberarPuesto() {
+      if (!confirm(`¿Seguro que deseas liberar el puesto #${numeroSeleccionado}?`)) return;
+
+      try {
+        const { error } = await supabaseClient
+          .from('rifa')
+          .update({ comprador: null, telefono: null, pagado: false })
+          .eq('numero', numeroSeleccionado);
+
+        if (error) throw error;
+      } catch (err) {
+        console.warn("Liberación efectuada en memoria local.");
+        const itemLocal = datosRifa.find(i => i.numero === numeroSeleccionado);
+        if (itemLocal) {
+          itemLocal.comprador = null;
+          itemLocal.telefono = null;
+          itemLocal.pagado = false;
+        }
+      }
+
+      cerrarModal();
+      cargarDatos();
+    }
+
+    // =========================================================================
+    // 4. GENERACIÓN Y DESCARGA DEL RESPALDO EN JSON
+    // =========================================================================
+
+    /**
+     * Exporta todo el arreglo `datosRifa` a un archivo local de formato `.json`.
+     */
+    function exportarJSON() {
+      // Convertir el arreglo de objetos a un string con formato bonito (indentación de 2 espacios)
+      const jsonString = JSON.stringify(datosRifa, null, 2);
+
+      // Crear un Blob de tipo application/json
+      const blob = new Blob([jsonString], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      // Obtener la fecha actual para nombrar el archivo de respaldo
+      const fecha = new Date().toISOString().split('T')[0];
+      
+      // Crear enlace temporal dinámico para forzar la descarga
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `respaldo_rifa_skate_${fecha}.json`;
+      
+      // Desencadenar la descarga y liberar la memoria del objeto URL
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
+    }
+
+    // =========================================================================
+    // 5. INICIALIZACIÓN
+    // =========================================================================
+    // Ejecutamos la carga inicial al abrir el documento
+    window.addEventListener('DOMContentLoaded', () => {
+      cargarDatos();
+    });
+  </script>
+</body>
+</html>
