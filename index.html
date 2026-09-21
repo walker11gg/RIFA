@@ -75,12 +75,12 @@
       <div>
         <button 
           id="btn-exportar"
-          onclick="exportarJSON()" 
+          onclick="exportarTXT()" 
           class="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2.5 rounded-xl transition-all duration-200 shadow-lg shadow-emerald-950/40 cursor-pointer active:scale-95">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
           </svg>
-          Descargar Respaldo JSON
+          Descargar Respaldo TXT
         </button>
       </div>
     </header>
@@ -414,28 +414,67 @@
     /**
      * Exporta todo el arreglo `datosRifa` a un archivo local de formato `.json`.
      */
-    function exportarJSON() {
+    function exportarTXT() {
       // Convertir el arreglo de objetos a un string con formato bonito (indentación de 2 espacios)
-      const jsonString = JSON.stringify(datosRifa, null, 2);
+      const fecha = new Date().toLocaleDateString('es-CO', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+  });
 
-      // Crear un Blob de tipo application/json
-      const blob = new Blob([jsonString], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
+  // Cálculo de estadísticas para el encabezado del archivo
+  const pagados = datosRifa.filter(i => i.pagado).length;
+  const apartados = datosRifa.filter(i => i.comprador && !i.pagado).length;
+  const libres = datosRifa.filter(i => !i.comprador).length;
 
-      // Obtener la fecha actual para nombrar el archivo de respaldo
-      const fecha = new Date().toISOString().split('T')[0];
-      
-      // Crear enlace temporal dinámico para forzar la descarga
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = `respaldo_rifa_skate_${fecha}.json`;
-      
-      // Desencadenar la descarga y liberar la memoria del objeto URL
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
-      URL.revokeObjectURL(url);
+  // Construcción del contenido del texto
+  let contenido = `====================================================\n`;
+  contenido += `         REPORTE DE RIFA - SKATE PRO-TABLA          \n`;
+  contenido += `         Fecha de reporte: ${fecha}                \n`;
+  contenido += `====================================================\n\n`;
+
+  contenido += `RESUMEN DE ESTADO:\n`;
+  contenido += `- Total Puestos : 100\n`;
+  contenido += `- Pagados       : ${pagados}\n`;
+  contenido += `- Apartados     : ${apartados}\n`;
+  contenido += `- Disponibles   : ${libres}\n`;
+  contenido += `----------------------------------------------------\n\n`;
+
+  contenido += `LISTADO DETALLADO DE PUESTOS:\n`;
+  contenido += `----------------------------------------------------\n`;
+
+  datosRifa.forEach(item => {
+    let estado = '[ LIBRE ]   ';
+    if (item.pagado) {
+      estado = '[ PAGADO ]  ';
+    } else if (item.comprador) {
+      estado = '[ APARTADO ]';
     }
+
+    const comprador = item.comprador ? item.comprador : '---';
+    const telefono = item.telefono ? item.telefono : '---';
+
+    // Alineación limpia
+    contenido += `Puesto #${item.numero} | ${estado} | Nombre: ${comprador} | Tel: ${telefono}\n`;
+  });
+
+  contenido += `\n====================================================\n`;
+  contenido += `Fin del reporte.\n`;
+
+  // Crear el archivo Blob de tipo text/plain
+  const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+
+  const fechaNom = new Date().toISOString().split('T')[0];
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `reporte_rifa_skate_${fechaNom}.txt`;
+
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
+}
 
     // =========================================================================
     // 5. INICIALIZACIÓN
