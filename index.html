@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <!-- Metadatos básicos para soporte UTF-8 y diseño responsive en dispositivos móviles -->
   <meta charset="UTF-8">
@@ -8,7 +9,8 @@
 
   <!-- TAILWIND CSS CDN: Estilos utilitarios de diseño rápido y moderno -->
   <script src="https://cdn.tailwindcss.com"></script>
-
+  <!-- Librería para generar archivos Excel desde JavaScript -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- SUPABASE JS SDK: Librería cliente para conectarnos directamente a PostgreSQL -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -23,7 +25,7 @@
     .btn-puesto {
       transition: transform 0.15s ease-in-out, background-color 0.2s ease, border-color 0.2s ease;
     }
-    
+
     .btn-puesto:hover {
       transform: translateY(-2px);
     }
@@ -33,54 +35,59 @@
     }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8 font-sans antialiased selection:bg-amber-500 selection:text-slate-950">
+
+<body
+  class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8 font-sans antialiased selection:bg-amber-500 selection:text-slate-950">
 
   <!-- CONTENEDOR PRINCIPAL -->
   <div class="max-w-5xl mx-auto space-y-6">
-    
+
     <!-- ENCABEZADO DE LA APLICACIÓN -->
-    <header class="flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-800/90 backdrop-blur-md p-6 rounded-2xl border border-slate-700/80 shadow-2xl">
+    <header
+      class="flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-800/90 backdrop-blur-md p-6 rounded-2xl border border-slate-700/80 shadow-2xl">
       <div>
         <h1 class="text-3xl font-black text-amber-400 uppercase tracking-wide flex items-center gap-2">
-          <span></span>  
+          <span></span>
         </h1>
         <p class="text-slate-400 text-sm mt-1"></p>
       </div>
       <!-- ENCABEZADO ESTILO BOLETA TRADICIONAL -->
-<header class="bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-700 shadow-xl max-w-3xl mx-auto tracking-wide">
-  
-  <!-- Fila Principal: "Rifa" + Premio con línea inferior -->
-  <div class="flex items-baseline gap-3 border-b-2 border-slate-400 pb-2">
-    <!-- Palabra Rifa en grande -->
-    <span class="text-4xl sm:text-6xl font-extrabold text-white leading-none">
-      Rifa
-    </span>
-    
-    <!-- Premio al centro con formato centrado/mayúsculas -->
-    <div class="flex-1 text-center font-bold text-amber-400 text-sm sm:text-lg uppercase leading-tight">
-      DE PIZZA GRANDE 40 CMS DE LA REPIZZA CON GASIMBA BIEN MAQUIAVELICO
-    </div>
-  </div>
+      <header
+        class="bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-700 shadow-xl max-w-3xl mx-auto tracking-wide">
 
-  <!-- Fila Secundaria: Fecha, Lotería y Carita -->
-  <div class="text-center mt-3 text-xs sm:text-sm font-semibold text-slate-300 uppercase tracking-wider space-y-1">
-    <p>
-      JUEGA: EL 26 DE SEPTIEMBRE CON LOS DOS ULTIMOS NUMEROS DE LA LOTERIA DE BOYACA <span class="text-amber-400 normal-case font-bold">:b</span>
-    </p>
-  </div>
+        <!-- Fila Principal: "Rifa" + Premio con línea inferior -->
+        <div class="flex items-baseline gap-3 border-b-2 border-slate-400 pb-2">
+          <!-- Palabra Rifa en grande -->
+          <span class="text-4xl sm:text-6xl font-extrabold text-white leading-none">
+            Rifa
+          </span>
 
-</header>
+          <!-- Premio al centro con formato centrado/mayúsculas -->
+          <div class="flex-1 text-center font-bold text-amber-400 text-sm sm:text-lg uppercase leading-tight">
+            DE PIZZA GRANDE 40 CMS DE LA REPIZZA CON GASIMBA BIEN MAQUIAVELICO
+          </div>
+        </div>
+
+        <!-- Fila Secundaria: Fecha, Lotería y Carita -->
+        <div
+          class="text-center mt-3 text-xs sm:text-sm font-semibold text-slate-300 uppercase tracking-wider space-y-1">
+          <p>
+            JUEGA: EL 26 DE SEPTIEMBRE CON LOS DOS ULTIMOS NUMEROS DE LA LOTERIA DE BOYACA <span
+              class="text-amber-400 normal-case font-bold">:b</span>
+          </p>
+        </div>
+
+      </header>
 
       <!-- BOTÓN DE ACCIÓN: RESPALDO DE DATOS EN FORMATO JSON -->
       <div>
-        <button 
-          id="btn-exportar"
-          onclick="exportarTXT()" 
+        <button id="btn-exportar" onclick="exportarExcel()"
           class="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2.5 rounded-xl transition-all duration-200 shadow-lg shadow-emerald-950/40 cursor-pointer active:scale-95">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
           </svg>
-          Descargar Respaldo TXT
+          Descargar Reperte Excel
         </button>
       </div>
     </header>
@@ -122,8 +129,7 @@
     </nav>
 
     <!-- CUADRÍCULA DE LOS 100 PUESTOS (GRID 5x20 Móvil / 10x10 Desktop) -->
-    <main 
-      id="grid-rifa" 
+    <main id="grid-rifa"
       class="grid grid-cols-5 sm:grid-cols-10 gap-2.5 bg-slate-800/80 p-4 md:p-6 rounded-2xl border border-slate-700/80 shadow-2xl">
       <!-- Los 100 números (01 - 100) se inyectan dinámicamente con JS -->
     </main>
@@ -131,9 +137,11 @@
   </div>
 
   <!-- MODAL PARA GESTIONAR O REGISTRAR COMPRADORES -->
-  <div id="modal-puesto" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl w-full max-w-md shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
-      
+  <div id="modal-puesto"
+    class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div
+      class="bg-slate-800 border border-slate-700 p-6 rounded-2xl w-full max-w-md shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+
       <!-- Encabezado del Modal -->
       <div class="flex justify-between items-center border-b border-slate-700/60 pb-3">
         <h2 class="text-xl font-bold text-amber-400">
@@ -141,32 +149,25 @@
         </h2>
         <button onclick="cerrarModal()" class="text-slate-400 hover:text-white font-bold p-1">✕</button>
       </div>
-      
+
       <!-- Formulario de Edición/Registro -->
       <form id="form-puesto" class="space-y-4">
         <div>
           <label for="input-nombre" class="block text-xs font-medium text-slate-300 mb-1.5">Nombre del Comprador</label>
-          <input 
-            type="text" 
-            id="input-nombre" 
-            placeholder="Ej. Juan Pérez" 
+          <input type="text" id="input-nombre" placeholder="Ej. Juan Pérez"
             class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all text-sm">
         </div>
 
         <div>
-          <label for="input-telefono" class="block text-xs font-medium text-slate-300 mb-1.5">Teléfono / WhatsApp</label>
-          <input 
-            type="text" 
-            id="input-telefono" 
-            placeholder="Ej. +57 300 123 4567" 
+          <label for="input-telefono" class="block text-xs font-medium text-slate-300 mb-1.5">Teléfono /
+            WhatsApp</label>
+          <input type="text" id="input-telefono" placeholder="Ej. +57 300 123 4567"
             class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all text-sm">
         </div>
 
         <!-- Toggle / Checkbox de Estado de Pago -->
         <div class="flex items-center gap-3 bg-slate-900/60 p-3 rounded-xl border border-slate-700/50">
-          <input 
-            type="checkbox" 
-            id="input-pagado" 
+          <input type="checkbox" id="input-pagado"
             class="w-5 h-5 accent-emerald-500 rounded cursor-pointer border-slate-700 bg-slate-800">
           <label for="input-pagado" class="text-sm font-semibold text-slate-200 cursor-pointer select-none">
             Marcado como PAGADO
@@ -175,22 +176,17 @@
 
         <!-- Botones de Acción del Formulario -->
         <div class="flex gap-2 pt-2">
-          <button 
-            type="button" 
-            onclick="cerrarModal()" 
+          <button type="button" onclick="cerrarModal()"
             class="w-1/2 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold py-2.5 rounded-xl text-sm transition cursor-pointer">
             Cancelar
           </button>
-          <button 
-            type="button" 
-            onclick="liberarPuesto()" 
+          <button type="button" onclick="liberarPuesto()"
             class="w-1/2 bg-rose-950/80 hover:bg-rose-900/90 text-rose-300 border border-rose-800/60 font-semibold py-2.5 rounded-xl text-sm transition cursor-pointer">
             Liberar Puesto
           </button>
         </div>
 
-        <button 
-          type="submit" 
+        <button type="submit"
           class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl text-sm transition shadow-lg shadow-amber-500/20 cursor-pointer">
           Guardar Registro
         </button>
@@ -203,9 +199,9 @@
     // =========================================================================
     // 1. CONFIGURACIÓN E INICIALIZACIÓN DE SUPABASE
     // =========================================================================
-    
+
     // ⚠️ ATENCIÓN: Reemplaza estas dos constantes con los credenciales de tu proyecto Supabase.
-    const SUPABASE_URL = 'https://ihsngmzijvhuzrtfnngf.supabase.co'; 
+    const SUPABASE_URL = 'https://ihsngmzijvhuzrtfnngf.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_kvyCcG3htnQ_kIhVlfIetg_Ooxt1M1H';
 
     // Instanciamos el cliente de Supabase usando la librería cargada por CDN
@@ -277,7 +273,7 @@
 
         // Evaluación de estilos de color según el estado del puesto
         let colorStyle = 'bg-slate-900 border-slate-700/80 text-slate-300 hover:border-amber-400 hover:text-amber-400';
-        
+
         if (item.pagado) {
           // Verde: Puesto comprado y pagado
           colorStyle = 'bg-emerald-500/20 border-emerald-500 text-emerald-400 hover:bg-emerald-500/30';
@@ -318,7 +314,7 @@
      */
     function abrirModal(item) {
       numeroSeleccionado = item.numero;
-      
+
       document.getElementById('modal-numero-titulo').innerText = item.numero;
       document.getElementById('input-nombre').value = item.comprador || '';
       document.getElementById('input-telefono').value = item.telefono || '';
@@ -354,9 +350,9 @@
       try {
         const { error } = await supabaseClient
           .from('rifa')
-          .update({ 
-            comprador: nombre || null, 
-            telefono: telefono || null, 
+          .update({
+            comprador: nombre || null,
+            telefono: telefono || null,
             pagado: pagado,
             fecha_registro: new Date().toISOString()
           })
@@ -366,7 +362,7 @@
 
       } catch (err) {
         console.warn("No se pudo persistir en Supabase (modo fallback activo). Actualizando estado local.");
-        
+
         // Si estamos probando localmente sin credenciales de Supabase
         const itemLocal = datosRifa.find(i => i.numero === numeroSeleccionado);
         if (itemLocal) {
@@ -414,66 +410,74 @@
     /**
      * Exporta todo el arreglo `datosRifa` a un archivo local de formato `.json`.
      */
-    function exportarTXT() {
-      // Convertir el arreglo de objetos a un string con formato bonito (indentación de 2 espacios)
-      const fecha = new Date().toLocaleDateString('es-CO', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+    /**
+ * Exporta el estado actual de la rifa a una hoja de cálculo .xlsx
+ */
+/**
+ * Exporta el estado de la rifa a un archivo Excel (.xlsx) con hojas separadas
+ * y tabla resumen de métricas (Pagados, Apartados, Disponibles).
+ */
+function exportarExcel() {
+  // 1. Calcular totales para las métricas
+  const totalPagados = datosRifa.filter(i => i.pagado).length;
+  const totalApartados = datosRifa.filter(i => i.comprador && !i.pagado).length;
+  const totalDisponibles = datosRifa.filter(i => !i.comprador).length;
+
+  // 2. Mapear datos formateados para las tablas
+  const mapearPuesto = item => ({
+    'Puesto': `#${item.numero}`,
+    'Estado': item.pagado ? 'PAGADO' : (item.comprador ? 'APARTADO' : 'LIBRE'),
+    'Comprador': item.comprador || '---',
+    'Teléfono': item.telefono || '---',
+    'Fecha Registro': item.fecha_registro ? new Date(item.fecha_registro).toLocaleString('es-CO') : '---'
   });
 
-  // Cálculo de estadísticas para el encabezado del archivo
-  const pagados = datosRifa.filter(i => i.pagado).length;
-  const apartados = datosRifa.filter(i => i.comprador && !i.pagado).length;
-  const libres = datosRifa.filter(i => !i.comprador).length;
+  // Filtrar listas por estado
+  const listaPagados = datosRifa.filter(i => i.pagado).map(mapearPuesto);
+  const listaPendientes = datosRifa.filter(i => !i.pagado).map(mapearPuesto);
 
-  // Construcción del contenido del texto
-  let contenido = `====================================================\n`;
-  contenido += `         REPORTE DE RIFA - SKATE PRO-TABLA          \n`;
-  contenido += `         Fecha de reporte: ${fecha}                \n`;
-  contenido += `====================================================\n\n`;
+  // 3. Crear el libro de trabajo de Excel
+  const libro = XLSX.utils.book_new();
 
-  contenido += `RESUMEN DE ESTADO:\n`;
-  contenido += `- Total Puestos : 100\n`;
-  contenido += `- Pagados       : ${pagados}\n`;
-  contenido += `- Apartados     : ${apartados}\n`;
-  contenido += `- Disponibles   : ${libres}\n`;
-  contenido += `----------------------------------------------------\n\n`;
+  // Anchura de columnas reutilizable
+  const anchosColumnas = [
+    { wch: 10 }, // Puesto
+    { wch: 12 }, // Estado
+    { wch: 25 }, // Comprador
+    { wch: 18 }, // Teléfono
+    { wch: 22 }  // Fecha Registro
+  ];
 
-  contenido += `LISTADO DETALLADO DE PUESTOS:\n`;
-  contenido += `----------------------------------------------------\n`;
+  // --- HOJA 1: PAGADOS ---
+  // A. Métricas en la parte superior
+  const resumenPagados = [
+    { 'Métrica': 'Total Pagados', 'Cantidad': totalPagados },
+    { 'Métrica': 'Total Apartados (Sin pagar)', 'Cantidad': totalApartados },
+    { 'Métrica': 'Total Disponibles', 'Cantidad': totalDisponibles },
+    {} // Fila en blanco de separación
+  ];
 
-  datosRifa.forEach(item => {
-    let estado = '[ LIBRE ]   ';
-    if (item.pagado) {
-      estado = '[ PAGADO ]  ';
-    } else if (item.comprador) {
-      estado = '[ APARTADO ]';
-    }
+  const hojaPagados = XLSX.utils.json_to_sheet(resumenPagados);
+  // B. Agregar el listado de pagados a partir de la fila 6
+  XLSX.utils.sheet_add_json(hojaPagados, listaPagados, { origin: "A6" });
+  hojaPagados['!cols'] = anchosColumnas;
+  XLSX.utils.book_append_sheet(libro, hojaPagados, "Pagados");
 
-    const comprador = item.comprador ? item.comprador : '---';
-    const telefono = item.telefono ? item.telefono : '---';
+  // --- HOJA 2: PENDIENTES Y LIBRES ---
+  const resumenPendientes = [
+    { 'Métrica': 'Total Pendientes por Cobrar', 'Cantidad': totalApartados },
+    { 'Métrica': 'Total Libre/Disponible', 'Cantidad': totalDisponibles },
+    {} // Fila en blanco
+  ];
 
-    // Alineación limpia
-    contenido += `Puesto #${item.numero} | ${estado} | Nombre: ${comprador} | Tel: ${telefono}\n`;
-  });
+  const hojaPendientes = XLSX.utils.json_to_sheet(resumenPendientes);
+  XLSX.utils.sheet_add_json(hojaPendientes, listaPendientes, { origin: "A5" });
+  hojaPendientes['!cols'] = anchosColumnas;
+  XLSX.utils.book_append_sheet(libro, hojaPendientes, "Pendientes y Libres");
 
-  contenido += `\n====================================================\n`;
-  contenido += `Fin del reporte.\n`;
-
-  // Crear el archivo Blob de tipo text/plain
-  const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-
+  // 4. Descargar el archivo
   const fechaNom = new Date().toISOString().split('T')[0];
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = `reporte_rifa_skate_${fechaNom}.txt`;
-
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-  URL.revokeObjectURL(url);
+  XLSX.writeFile(libro, `reporte_rifa_skate_${fechaNom}.xlsx`);
 }
 
     // =========================================================================
@@ -485,4 +489,5 @@
     });
   </script>
 </body>
+
 </html>
